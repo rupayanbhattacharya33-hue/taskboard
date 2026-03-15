@@ -1,17 +1,32 @@
 import { create } from 'zustand';
 import api from '../api/axios';
 
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+const retryRequest = async (fn, retries = 3, delay = 2000) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const result = await fn();
+      return result;
+    } catch (err) {
+      if (i === retries - 1) throw err;
+      await sleep(delay);
+    }
+  }
+};
+
 const useAuthStore = create((set) => ({
   user: JSON.parse(localStorage.getItem('user')) || null,
   token: localStorage.getItem('token') || null,
   isLoading: false,
   error: null,
 
-  // ── Register ──────────────────────────────────────────────
   register: async (name, email, password) => {
     set({ isLoading: true, error: null });
     try {
-      const res = await api.post('/auth/register', { name, email, password });
+      const res = await retryRequest(() =>
+        api.post('/auth/register', { name, email, password })
+      );
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
       set({ user: res.data.user, token: res.data.token, isLoading: false });
@@ -22,11 +37,12 @@ const useAuthStore = create((set) => ({
     }
   },
 
-  // ── Login ─────────────────────────────────────────────────
   login: async (email, password) => {
     set({ isLoading: true, error: null });
     try {
-      const res = await api.post('/auth/login', { email, password });
+      const res = await retryRequest(() =>
+        api.post('/auth/login', { email, password })
+      );
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
       set({ user: res.data.user, token: res.data.token, isLoading: false });
@@ -37,7 +53,6 @@ const useAuthStore = create((set) => ({
     }
   },
 
-  // ── Logout ────────────────────────────────────────────────
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
