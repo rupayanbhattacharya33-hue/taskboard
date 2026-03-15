@@ -33,7 +33,8 @@ export default function BoardPage() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
-    const ws = new WebSocket('ws://localhost:5000');
+    const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:5000';
+    const ws = new WebSocket(wsUrl);
     ws.onopen = () => {
       ws.send(JSON.stringify({ type: 'JOIN_BOARD', boardId: id, token }));
     };
@@ -98,7 +99,6 @@ export default function BoardPage() {
     else toast.error('Failed to delete task');
   };
 
-  // Progress calculations
   const totalTasks = tasks.length;
   const doneTasks = tasks.filter(t => t.status === 'done').length;
   const inProgressTasks = tasks.filter(t => t.status === 'in-progress').length;
@@ -156,7 +156,6 @@ export default function BoardPage() {
       {totalTasks > 0 && (
         <div className="px-6 py-3 border-b border-white/5 bg-slate-900/40 flex-shrink-0">
           <div className="flex items-center gap-6">
-            {/* Stats */}
             <div className="flex items-center gap-4 text-xs flex-shrink-0">
               <span className="flex items-center gap-1.5 text-white/40">
                 <span className="w-2 h-2 rounded-full bg-slate-400 inline-block" />
@@ -171,7 +170,6 @@ export default function BoardPage() {
                 {doneTasks} done
               </span>
             </div>
-            {/* Bar */}
             <div className="flex-1 flex items-center gap-3">
               <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
                 <div
