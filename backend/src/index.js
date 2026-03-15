@@ -15,11 +15,7 @@ const PORT = process.env.PORT || 5000;
 // ── Middleware ──────────────────────────────────────────────
 app.use(helmet());
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'https://taskboard-lake.vercel.app',
-    process.env.CLIENT_URL,
-  ].filter(Boolean),
+  origin: true,
   credentials: true,
 }));
 app.use(morgan('dev'));
@@ -35,6 +31,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/boards', require('./routes/boards'));
 app.use('/api/boards/:boardId/tasks', require('./routes/tasks'));
 app.use('/api/boards/:boardId/webhooks', require('./routes/webhooks'));
+app.use('/api/tasks/:taskId/comments', require('./routes/comments'));
 
 // ── Global Error Handler ─────────────────────────────────────
 app.use((err, req, res, next) => {
@@ -60,4 +57,4 @@ mongoose
     process.exit(1);
   });
 
-module.exports = app;;
+module.exports = app;
