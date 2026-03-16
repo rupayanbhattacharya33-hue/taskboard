@@ -50,6 +50,7 @@ const taskSchema = new mongoose.Schema({
   attachments: [{
     name: { type: String },
     url: { type: String },
+    type: { type: String, default: 'file' }, // 'file' or 'image'
     uploadedAt: { type: Date, default: Date.now },
   }],
   comments: [{

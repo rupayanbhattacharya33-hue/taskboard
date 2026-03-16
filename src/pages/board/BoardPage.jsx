@@ -5,7 +5,7 @@ import useBoardStore from '../../store/boardStore';
 import useAuthStore from '../../store/authStore';
 import Column from '../../components/Column';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Plus, Loader, X } from 'lucide-react';
+import { ArrowLeft, Plus, Loader, X, ImageIcon } from 'lucide-react';
 import NotificationBell from '../../components/NotificationBell';
 import useNotificationStore from '../../store/notificationStore';
 
@@ -22,6 +22,7 @@ export default function BoardPage() {
   const [taskDesc, setTaskDesc] = useState('');
   const [taskPriority, setTaskPriority] = useState('medium');
   const [taskDueDate, setTaskDueDate] = useState('');
+  const [taskImage, setTaskImage] = useState('');
   const [creating, setCreating] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
 
@@ -41,7 +42,6 @@ export default function BoardPage() {
     ws.onmessage = (event) => {
       const msg = JSON.parse(event.data);
       const currentUser = JSON.parse(localStorage.getItem('user'));
-
       if (msg.type === 'TASK_CREATED') {
         const isOwnAction = msg.task.createdBy?._id === currentUser?.id ||
                             msg.task.createdBy === currentUser?.id;
@@ -88,6 +88,7 @@ export default function BoardPage() {
       priority: taskPriority,
       status: defaultStatus,
       dueDate: taskDueDate || null,
+      attachments: taskImage ? [{ name: 'cover', url: taskImage, type: 'image' }] : [],
     });
     setCreating(false);
     if (task) {
@@ -97,6 +98,7 @@ export default function BoardPage() {
       setTaskDesc('');
       setTaskPriority('medium');
       setTaskDueDate('');
+      setTaskImage('');
     } else {
       toast.error('Failed to create task');
     }
@@ -223,7 +225,7 @@ export default function BoardPage() {
       {/* Create Task Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-slate-900 border border-white/10 rounded-2xl shadow-2xl w-full max-w-md p-6">
+          <div className="bg-slate-900 border border-white/10 rounded-2xl shadow-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-white">New Task</h2>
               <button onClick={() => setShowModal(false)} className="text-white/40 hover:text-white transition">
@@ -275,6 +277,47 @@ export default function BoardPage() {
                   />
                 </div>
               </div>
+
+              {/* Cover Image */}
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-1.5">
+                  Cover Image (optional)
+                </label>
+                {taskImage ? (
+                  <div className="relative rounded-xl overflow-hidden">
+                    <img src={taskImage} alt="cover" className="w-full h-32 object-cover rounded-xl" />
+                    <button
+                      type="button"
+                      onClick={() => setTaskImage('')}
+                      className="absolute top-2 right-2 bg-black/50 text-white rounded-lg p-1 hover:bg-black/70 transition"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-white/10 rounded-xl cursor-pointer hover:border-indigo-500/50 hover:bg-indigo-500/5 transition">
+                    <ImageIcon className="w-6 h-6 text-white/20 mb-1" />
+                    <span className="text-white/20 text-xs">Click to add cover image</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        if (file.size > 3 * 1024 * 1024) {
+                          toast.error('Image too large (max 3MB)');
+                          return;
+                        }
+                        const reader = new FileReader();
+                        reader.onload = () => setTaskImage(reader.result);
+                        reader.readAsDataURL(file);
+                      }}
+                    />
+                  </label>
+                )}
+              </div>
+
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
@@ -301,6 +344,16 @@ export default function BoardPage() {
       {selectedTask && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-slate-900 border border-white/10 rounded-2xl shadow-2xl w-full max-w-md p-6">
+            {/* Cover image in detail view */}
+            {selectedTask.attachments?.find(a => a.type === 'image') && (
+              <div className="w-full h-40 rounded-xl overflow-hidden mb-4">
+                <img
+                  src={selectedTask.attachments.find(a => a.type === 'image').url}
+                  alt="cover"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
             <div className="flex items-center justify-between mb-4">
               <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
                 selectedTask.priority === 'high' ? 'bg-red-500/20 text-red-400' :

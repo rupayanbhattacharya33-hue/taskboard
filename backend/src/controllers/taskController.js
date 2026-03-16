@@ -30,7 +30,7 @@ const createTask = async (req, res) => {
       return res.status(404).json({ message: 'Board not found' });
     }
 
-    const { title, description, status, priority, assignee, dueDate } = req.body;
+  const { title, description, status, priority, assignee, dueDate, attachments } = req.body;
 
     const task = await Task.create({
       title,
@@ -39,6 +39,7 @@ const createTask = async (req, res) => {
       priority,
       assignee,
       dueDate,
+      attachments: attachments || [],
       board: req.params.boardId,
       createdBy: req.user._id,
     });
