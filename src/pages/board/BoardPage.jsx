@@ -40,13 +40,23 @@ export default function BoardPage() {
     };
     ws.onmessage = (event) => {
       const msg = JSON.parse(event.data);
+      const currentUser = JSON.parse(localStorage.getItem('user'));
+
       if (msg.type === 'TASK_CREATED') {
-        useBoardStore.getState().addTaskRealtime(msg.task);
-        addNotification({ type: 'TASK_CREATED', taskTitle: msg.task.title });
+        const isOwnAction = msg.task.createdBy?._id === currentUser?.id ||
+                            msg.task.createdBy === currentUser?.id;
+        if (!isOwnAction) {
+          useBoardStore.getState().addTaskRealtime(msg.task);
+          addNotification({ type: 'TASK_CREATED', taskTitle: msg.task.title });
+        }
       }
       if (msg.type === 'TASK_UPDATED') {
         useBoardStore.getState().updateTaskRealtime(msg.task);
-        addNotification({ type: 'TASK_UPDATED', taskTitle: msg.task.title });
+        const isOwnAction = msg.task.createdBy?._id === currentUser?.id ||
+                            msg.task.createdBy === currentUser?.id;
+        if (!isOwnAction) {
+          addNotification({ type: 'TASK_UPDATED', taskTitle: msg.task.title });
+        }
       }
       if (msg.type === 'TASK_DELETED') {
         useBoardStore.getState().deleteTaskRealtime(msg.taskId);
