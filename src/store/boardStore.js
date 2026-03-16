@@ -104,9 +104,13 @@ const useBoardStore = create((set, get) => ({
   },
 
   // ── Real-time update from WebSocket ───────────────────────
-  addTaskRealtime: (task) => {
-    set((state) => ({ tasks: [...state.tasks, task] }));
-  },
+ addTaskRealtime: (task) => {
+  set((state) => ({
+    tasks: state.tasks.find(t => t._id === task._id)
+      ? state.tasks
+      : [...state.tasks, task]
+  }));
+},
   updateTaskRealtime: (task) => {
     set((state) => ({
       tasks: state.tasks.map((t) => t._id === task._id ? task : t),
